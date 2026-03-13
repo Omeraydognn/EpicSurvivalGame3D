@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Epic Survival Game 3D</title>
+    <link rel="stylesheet" href="/src/style.css" />
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loader-container">
+            <h1>&#x2694;&#xFE0F; EPIC SURVIVAL &#x2694;&#xFE0F;</h1>
+            <div class="loader-bar"><div class="loader-fill"></div></div>
+            <p id="loading-text">Dunya olusturuluyor...</p>
+        </div>
+    </div>
+
+    <!-- Main Menu -->
+    <div id="main-menu" style="display:none;">
+        <div class="menu-container">
+            <h1 class="game-title">&#x2694;&#xFE0F; EPIC SURVIVAL 3D &#x2694;&#xFE0F;</h1>
+            <p class="subtitle">Kesfet - Topla - Insa Et - Hayatta Kal</p>
+            <button id="btn-play" class="menu-btn">&#x1F3AE; OYNA</button>
+            <button id="btn-controls" class="menu-btn">&#x1F579;&#xFE0F; KONTROLLER</button>
+            <div id="controls-panel" style="display:none;" class="controls-info">
+                <p><b>W A S D</b> - Hareket / Arac sur</p>
+                <p><b>MOUSE</b> - Etrafina bak</p>
+                <p><b>SPACE</b> - Zipla</p>
+                <p><b>SHIFT</b> - Kos</p>
+                <p><b>E</b> - Topla / Etkilesim / Arac in-bin</p>
+                <p><b>Q</b> - Insa modu</p>
+                <p><b>F</b> - Saldir</p>
+                <p><b>TAB</b> - Envanter</p>
+                <p><b>K</b> - Yetenek agaci</p>
+                <p><b>1-5</b> - Hizli slot</p>
+                <p><b>ESC</b> - Menu</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game HUD -->
+    <div id="game-hud" style="display:none;">
+        <div id="crosshair">+</div>
+
+        <!-- XP Bar (top) -->
+        <div id="xp-container">
+            <span id="level-text">Lv.1</span>
+            <div class="xp-bar-bg"><div id="xp-bar" class="xp-bar-fill"></div></div>
+        </div>
+
+        <!-- Status Bars -->
+        <div id="status-bars">
+            <div class="status-bar">
+                <span class="bar-icon">&#x2764;&#xFE0F;</span>
+                <div class="bar-bg"><div id="health-bar" class="bar-fill health"></div></div>
+                <span id="health-text" class="bar-text">100</span>
+            </div>
+            <div class="status-bar">
+                <span class="bar-icon">&#x1F356;</span>
+                <div class="bar-bg"><div id="hunger-bar" class="bar-fill hunger"></div></div>
+                <span id="hunger-text" class="bar-text">100</span>
+            </div>
+            <div class="status-bar">
+                <span class="bar-icon">&#x1F4A7;</span>
+                <div class="bar-bg"><div id="thirst-bar" class="bar-fill thirst"></div></div>
+                <span id="thirst-text" class="bar-text">100</span>
+            </div>
+            <div class="status-bar">
+                <span class="bar-icon">&#x26A1;</span>
+                <div class="bar-bg"><div id="stamina-bar" class="bar-fill stamina"></div></div>
+                <span id="stamina-text" class="bar-text">100</span>
+            </div>
+            <div class="status-bar" id="oxygen-bar-container" style="display:none;">
+                <span class="bar-icon">&#x1F4A8;</span>
+                <div class="bar-bg"><div id="oxygen-bar" class="bar-fill oxygen"></div></div>
+                <span id="oxygen-text" class="bar-text">100</span>
+            </div>
+        </div>
+
+        <!-- Armor / Weather info -->
+        <div id="info-bar">
+            <span id="armor-text"></span>
+            <span id="weather-icon">&#x2600;&#xFE0F;</span>
+            <span id="temp-text">20C</span>
+        </div>
+
+        <!-- Quick Slots -->
+        <div id="quick-slots">
+            <div class="quick-slot active" data-slot="0"><span class="slot-key">1</span><span class="slot-item"></span><span class="slot-count"></span></div>
+            <div class="quick-slot" data-slot="1"><span class="slot-key">2</span><span class="slot-item"></span><span class="slot-count"></span></div>
+            <div class="quick-slot" data-slot="2"><span class="slot-key">3</span><span class="slot-item"></span><span class="slot-count"></span></div>
+            <div class="quick-slot" data-slot="3"><span class="slot-key">4</span><span class="slot-item"></span><span class="slot-count"></span></div>
+            <div class="quick-slot" data-slot="4"><span class="slot-key">5</span><span class="slot-item"></span><span class="slot-count"></span></div>
+        </div>
+
+        <div id="interaction-text" style="display:none;"></div>
+
+        <!-- Day / Score -->
+        <div id="day-indicator">
+            <span id="day-icon">&#x2600;&#xFE0F;</span>
+            <span id="day-text">Gun 1</span>
+        </div>
+        <div id="score-display">
+            <span>&#x2B50; Puan: </span><span id="score-value">0</span>
+        </div>
+        <div id="village-indicator" style="display:none;">
+            <span>&#x1F3D8;&#xFE0F; Koy</span>
+            <span id="village-distance"></span>
+        </div>
+
+        <canvas id="minimap" width="150" height="150"></canvas>
+        <div id="damage-overlay"></div>
+
+        <div id="build-mode" style="display:none;">
+            <p>&#x1F528; INSA MODU</p>
+            <p class="build-hint">Sol tik: Yerlestir | Sag tik: Iptal | Scroll: Dondur</p>
+        </div>
+
+        <!-- Vehicle HUD -->
+        <div id="vehicle-hud" style="display:none;">
+            <p>&#x1F697; ARAC</p>
+            <p>Hiz: <span id="vehicle-speed">0 km/h</span></p>
+            <p>Yakit: <span id="vehicle-fuel">100%</span></p>
+            <p class="build-hint">[E] In | WASD Sur</p>
+        </div>
+
+        <!-- XP Popup -->
+        <div id="xp-popup" class="xp-popup"></div>
+    </div>
+
+    <!-- Inventory Panel -->
+    <div id="inventory-panel" style="display:none;">
+        <div class="inventory-container">
+            <h2>&#x1F4E6; Envanter</h2>
+            <p id="equipped-armor" class="armor-info">Zirh: Yok</p>
+            <div id="inventory-grid"></div>
+            <div class="crafting-section">
+                <h3>&#x1F527; Uretim</h3>
+                <div id="crafting-recipes"></div>
+            </div>
+            <button id="close-inventory" class="menu-btn small">Kapat</button>
+        </div>
+    </div>
+
+    <!-- Skill Panel -->
+    <div id="skill-panel" style="display:none;">
+        <div class="skill-container">
+            <h2>&#x26A1; Yetenekler</h2>
+            <div id="skill-content"></div>
+            <button id="close-skills" class="menu-btn small">Kapat</button>
+        </div>
+    </div>
+
+    <!-- Death Screen -->
+    <div id="death-screen" style="display:none;">
+        <div class="death-container">
+            <h1>&#x1F480; OLDUN &#x1F480;</h1>
+            <p id="death-score">Puan: 0</p>
+            <p id="death-days">Hayatta kalinan gun: 0</p>
+            <p id="death-level">Seviye: 1</p>
+            <button id="btn-respawn" class="menu-btn">&#x1F504; Tekrar Dene</button>
+        </div>
+    </div>
+
+    <!-- Pause Menu -->
+    <div id="pause-menu" style="display:none;">
+        <div class="menu-container">
+            <h2>&#x23F8;&#xFE0F; DURAKLADI</h2>
+            <button id="btn-resume" class="menu-btn">&#x25B6;&#xFE0F; Devam Et</button>
+            <button id="btn-quit" class="menu-btn">&#x1F6AA; Ana Menu</button>
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>
