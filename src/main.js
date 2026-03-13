@@ -204,6 +204,12 @@ class Game {
       this.toggleSkills();
     });
 
+    document.getElementById('btn-sort-inventory')?.addEventListener('click', () => {
+      this.audio.playButtonClick();
+      this.inventory.sort();
+      this.ui.updateInventory(this.inventory);
+    });
+
     // Pointer lock
     this.renderer.domElement.addEventListener('click', () => {
       if (this.state === 'playing') {

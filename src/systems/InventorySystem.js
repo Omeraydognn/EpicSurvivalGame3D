@@ -13,6 +13,8 @@ export const ITEMS = {
   fiber: { name: 'Lif', icon: '🌿', stackable: true, maxStack: 64, type: 'resource' },
   cloth: { name: 'Kumaş', icon: '🧵', stackable: true, maxStack: 32, type: 'resource' },
   fuel: { name: 'Yakıt', icon: '⛽', stackable: true, maxStack: 16, type: 'resource' },
+  gem_fire: { name: 'Alev Taşı', icon: '♦️', stackable: true, maxStack: 10, type: 'resource' },
+  gem_ice: { name: 'Buz Taşı', icon: '🌌', stackable: true, maxStack: 10, type: 'resource' },
 
   // === FOOD & DRINK ===
   berry: { name: 'Çilek', icon: '🫐', stackable: true, maxStack: 32, type: 'food', hunger: 8, health: 2 },
@@ -65,6 +67,10 @@ export const ITEMS = {
 
   // === SPECIAL ===
   raft_kit: { name: 'Sal Kiti', icon: '🛶', stackable: false, type: 'special' },
+
+  // === MAGIC & ARTIFACTS ===
+  epic_sword: { name: 'Epic Kılıç NFT', icon: '🔥', stackable: false, type: 'weapon', damage: 100, isNFT: true, tier: 5 },
+  ancient_relic: { name: 'Kadim Kalıntı', icon: '🏺', stackable: true, maxStack: 5, type: 'artifact' },
 };
 
 // Crafting recipes
@@ -226,6 +232,59 @@ export class InventorySystem {
     return total;
   }
 
+  sort() {
+    // Filter out empty slots
+    let items = this.slots.filter(slot => slot !== null);
+    
+    // Sort by type, then by id, then by count (descending)
+    items.sort((a, b) => {
+      const defA = ITEMS[a.id];
+      const defB = ITEMS[b.id];
+      
+      if (defA.type !== defB.type) {
+        return defA.type.localeCompare(defB.type);
+      }
+      
+      if (a.id !== b.id) {
+        return a.id.localeCompare(b.id);
+      }
+      
+      return b.count - a.count;
+    });
+
+    // Re-pack stackables (merge partial stacks)
+    const merged = [];
+    for (const item of items) {
+      const def = ITEMS[item.id];
+      if (def.stackable) {
+        let added = false;
+        for (const m of merged) {
+          if (m.id === item.id && m.count < def.maxStack) {
+            const space = def.maxStack - m.count;
+            if (item.count <= space) {
+              m.count += item.count;
+              item.count = 0;
+              added = true;
+              break;
+            } else {
+              m.count += space;
+              item.count -= space;
+            }
+          }
+        }
+        if (item.count > 0) merged.push(item);
+      } else {
+        merged.push(item);
+      }
+    }
+
+    // Assign back to slots
+    this.slots = Array(this.maxSlots).fill(null);
+    for (let i = 0; i < Math.min(merged.length, this.maxSlots); i++) {
+      this.slots[i] = merged[i];
+    }
+  }
+
   getActiveItem() {
     return this.slots[this.activeSlot];
   }
@@ -307,6 +366,16 @@ export class InventorySystem {
         if (item.count <= 0) this.slots[this.activeSlot] = null;
         return true;
       }
+    } else if (def.type === 'consumable') {
+      if (def.health && player.health < player.maxHealth) {
+        player.heal(def.health);
+      }
+      if (def.stamina && player.stamina < player.maxStamina) {
+        player.restoreStamina(def.stamina);
+      }
+      item.count--;
+      if (item.count <= 0) this.slots[this.activeSlot] = null;
+      return true;
     }
 
     return false;

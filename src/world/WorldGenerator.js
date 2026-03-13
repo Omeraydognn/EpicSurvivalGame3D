@@ -36,6 +36,7 @@ export class WorldGenerator {
     this.createTreasureChests();
     this.createRuins();
     this.createVillage();
+    this.createAncientRuins();
   }
 
   getBiome(x, z) {
@@ -126,19 +127,54 @@ export class WorldGenerator {
   }
 
   createWater() {
-    const geo = new THREE.PlaneGeometry(this.worldSize * 3, this.worldSize * 3, 80, 80);
+    // High-quality animated water
+    const geo = new THREE.PlaneGeometry(this.worldSize * 3, this.worldSize * 3, 128, 128);
     geo.rotateX(-Math.PI / 2);
+    
+    // Create animated shader/material for water
     const mat = new THREE.MeshStandardMaterial({
-      color: 0x1a7fbd,
+      color: 0x005577, // Deeper blue
       transparent: true,
-      opacity: 0.65,
-      roughness: 0.05,
-      metalness: 0.2,
+      opacity: 0.8,
+      roughness: 0.1,
+      metalness: 0.6,
     });
+    
     this.water = new THREE.Mesh(geo, mat);
     this.water.position.y = this.waterLevel;
     this.water.receiveShadow = true;
+    
+    // Save original vertices for wave animation
+    const pos = geo.attributes.position;
+    this.waterVertices = [];
+    for (let i = 0; i < pos.count; i++) {
+      this.waterVertices.push({
+        x: pos.getX(i),
+        y: pos.getY(i),
+        z: pos.getZ(i)
+      });
+    }
+
     this.scene.add(this.water);
+  }
+
+  update(time) {
+    // Animate water
+    if (this.water && this.waterVertices) {
+      const pos = this.water.geometry.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const vx = this.waterVertices[i].x;
+        const vz = this.waterVertices[i].z;
+        // Complex wave combining multiple sine waves
+        const y = Math.sin(vx * 0.1 + time) * 0.4 
+                + Math.sin(vz * 0.15 + time * 1.5) * 0.3
+                + Math.sin((vx + vz) * 0.05 + time * 0.8) * 0.5;
+        
+        pos.setY(i, y);
+      }
+      pos.needsUpdate = true;
+      this.water.geometry.computeVertexNormals();
+    }
   }
 
   createTrees() {
@@ -1488,5 +1524,64 @@ export class WorldGenerator {
         }
       }
     });
+  }
+
+  createLootDrop(pos, itemName) {
+    if (!this.treasureChests) this.treasureChests = [];
+    
+    // Create a small visual "loot bag" or "dropped item"
+    const boxGeo = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+    const boxMat = new THREE.MeshStandardMaterial({ color: 0x8b4513, map: this.materials.chestMap || null });
+    const mesh = new THREE.Mesh(boxGeo, boxMat);
+    
+    // Drop exactly on terrain
+    const h = this.getHeightAt(pos.x, pos.z);
+    mesh.position.set(pos.x, h + 0.25, pos.z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    
+    this.scene.add(mesh);
+    
+    // Convert to chest format so main.js 'interact' logic picks it up
+    this.treasureChests.push({
+      position: new THREE.Vector3(pos.x, h, pos.z),
+      opened: false,
+      mesh: mesh,
+      loot: [
+        { item: itemName, amount: 1 }
+      ]
+    });
+  }
+
+  createAncientRuins() {
+    const ruinsMat = new THREE.MeshStandardMaterial({ color: 0x444444, map: this.materials.stoneMap || null });
+    
+    // Create 3 ruins scattered
+    for(let i = 0; i < 3; i++) {
+        const x = this.worldSize * (Math.random() - 0.5) * 0.8;
+        const z = this.worldSize * (Math.random() - 0.5) * 0.8;
+        const h = this.getHeightAt(x, z);
+        
+        if (h > this.waterLevel + 2) {
+            // Build a small ruin layout
+            const wGeo = new THREE.BoxGeometry(2, 4, 1);
+            const pGeo = new THREE.CylinderGeometry(0.5, 0.5, 5, 8);
+            
+            for(let j = 0; j < 5; j++) {
+                const mesh = new THREE.Mesh(Math.random() > 0.5 ? wGeo : pGeo, ruinsMat);
+                mesh.position.set(x + (Math.random() - 0.5) * 10, h + 2, z + (Math.random() - 0.5) * 10);
+                mesh.rotation.y = Math.random() * Math.PI;
+                mesh.rotation.z = (Math.random() - 0.5) * 0.3; // slightly broken
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                this.scene.add(mesh);
+            }
+            
+            // Add a treasure chest in the middle!
+            this.createLootDrop({x: x, z: z}, 'ancient_relic');
+            this.createLootDrop({x: x+2, z: z}, 'gem_fire');
+            this.createLootDrop({x: x-2, z: z}, 'epic_sword');
+        }
+    }
   }
 }

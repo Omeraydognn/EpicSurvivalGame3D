@@ -2,10 +2,11 @@ import * as THREE from 'three';
 import { randomRange, distance2D, clamp } from '../utils/math.js';
 
 export class Enemy {
-  constructor(scene, position, type = 'zombie') {
+  constructor(scene, position, type = 'zombie', world) {
     this.scene = scene;
     this.type = type;
     this.position = position.clone();
+    this.world = world;
     this.velocity = new THREE.Vector3();
     this.alive = true;
     this.alertRange = type === 'skeleton' ? 25 : 18;
@@ -257,8 +258,12 @@ export class Enemy {
 
   die() {
     this.alive = false;
+    
     // Death animation - fall over
     const fallAnim = () => {
+      // Safely ensure mesh is still there
+      if (!this.mesh) return; 
+
       if (this.mesh.rotation.x > -Math.PI / 2) {
         this.mesh.rotation.x -= 0.1;
         requestAnimationFrame(fallAnim);
@@ -269,6 +274,30 @@ export class Enemy {
       }
     };
     fallAnim();
+
+    // Spawn a physical loot drop where it died
+    if (this.world && this.world.createLootDrop) {
+      const rareLoot = ['epic_sword', 'ancient_relic', 'gem_fire', 'gem_ice', 'health_potion', 'stamina_potion'];
+      const commonLoot = ['wood', 'stone', 'leather', 'fiber', 'meat'];
+      
+      const pos = this.mesh.position.clone();
+      
+      // Higher chance for cool items
+      if (Math.random() < 0.25) {
+        const item = rareLoot[Math.floor(Math.random() * rareLoot.length)];
+        this.world.createLootDrop(pos, item);
+      } else if (Math.random() < 0.6) {
+        const item = commonLoot[Math.floor(Math.random() * commonLoot.length)];
+        this.world.createLootDrop(pos, item);
+        
+        // Maybe drop a second common item
+        if (Math.random() < 0.5) {
+            const item2 = commonLoot[Math.floor(Math.random() * commonLoot.length)];
+            const pos2 = pos.clone().add(new THREE.Vector3((Math.random()-0.5), 0, (Math.random()-0.5)));
+            this.world.createLootDrop(pos2, item2);
+        }
+      }
+    }
   }
 }
 
@@ -304,7 +333,7 @@ export class EnemyManager {
     const isNight = dayNight && dayNight.isNight;
     const type = isNight ? (Math.random() < 0.5 ? 'skeleton' : 'zombie') : 'zombie';
 
-    const enemy = new Enemy(this.scene, new THREE.Vector3(x, h, z), type);
+    const enemy = new Enemy(this.scene, new THREE.Vector3(x, h, z), type, this.world);
     this.enemies.push(enemy);
   }
 

@@ -117,11 +117,9 @@ export class Player {
 
   onMouseMove(e) {
     if (this.isInVehicle) return; // Vehicle handles rotation differently
-    this.euler.setFromQuaternion(this.camera.quaternion);
     this.euler.y -= e.movementX * this.mouseSensitivity;
     this.euler.x -= e.movementY * this.mouseSensitivity;
     this.euler.x = clamp(this.euler.x, -Math.PI / 2.2, Math.PI / 2.2);
-    this.camera.quaternion.setFromEuler(this.euler);
   }
 
   applyLevelBonuses(levelSystem) {
@@ -259,14 +257,15 @@ export class Player {
     this.position.x = clamp(this.position.x, -bound, bound);
     this.position.z = clamp(this.position.z, -bound, bound);
 
-    // Update camera
+    // Update camera position
     this.camera.position.copy(this.position);
 
-    // Head bob when moving
+    // Head bob & Update camera rotation
     const targetRoll = (this.direction.length() > 0 && this.isGrounded)
       ? Math.sin(performance.now() / 1000 * (this.isSprinting ? 12 : 8)) * 0.015
       : 0;
-    this.camera.rotation.z += (targetRoll - this.camera.rotation.z) * 0.1;
+    this.currentRoll = (this.currentRoll || 0) + (targetRoll - (this.currentRoll || 0)) * 0.1;
+    this.camera.quaternion.setFromEuler(new THREE.Euler(this.euler.x, this.euler.y, this.currentRoll, 'YXZ'));
 
     if (this.direction.length() > 0 && this.isGrounded) {
       const bobSpeed = this.isSprinting ? 12 : 8;
