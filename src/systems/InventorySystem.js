@@ -30,6 +30,7 @@ export const ITEMS = {
   stone_sword: { name: 'Taş Kılıç', icon: '⚔️', stackable: false, type: 'weapon', damage: 25, tier: 0 },
   iron_sword: { name: 'Demir Kılıç', icon: '🔪', stackable: false, type: 'weapon', damage: 45, tier: 1 },
   gold_sword: { name: 'Altın Kılıç', icon: '✨', stackable: false, type: 'weapon', damage: 65, tier: 2 },
+  sword_epic: { name: 'Epic NFT Kılıcı', icon: '🔥', stackable: false, type: 'weapon', damage: 100, tier: 3 },
   bow: { name: 'Yay', icon: '🏹', stackable: false, type: 'weapon', damage: 30, tier: 1, ranged: true },
   spear: { name: 'Mızrak', icon: '🔱', stackable: false, type: 'weapon', damage: 35, tier: 1 },
 

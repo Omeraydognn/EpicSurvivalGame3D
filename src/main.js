@@ -41,9 +41,9 @@ class Game {
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.VSMShadowMap; // Better shadows than PCFSoft
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.2;
+    this.renderer.toneMappingExposure = 1.0; // Slightly darker/cinematic
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     document.body.appendChild(this.renderer.domElement);
   }
@@ -127,6 +127,56 @@ class Game {
       this.audio.playButtonClick();
       const panel = document.getElementById('controls-panel');
       if (panel) panel.style.display = panel.style.display === 'none' ? '' : 'none';
+    });
+
+    document.getElementById('btn-mint-nft')?.addEventListener('click', async () => {
+      if (!this.web3.account) {
+        this.ui.showInteraction("Once ana menuden Web3 Cuzdaninizi baglayin!");
+        return;
+      }
+      
+      // Check inventory resources (need 5 wood and 5 stone for the Epic Sword NFT)
+      if (this.inventory.countItem('wood') >= 5 && this.inventory.countItem('stone') >= 5) {
+        try {
+          const btn = document.getElementById('btn-mint-nft');
+          const status = document.getElementById('mint-status');
+          
+          btn.disabled = true;
+          btn.textContent = "Onay Bekleniyor (Cuzdan)...";
+          status.textContent = "Lutfen Cuzdaninizdan islemi onaylayin.";
+
+          // Remove items before opening transaction to prevent double spending
+          this.inventory.removeItem('wood', 5);
+          this.inventory.removeItem('stone', 5);
+          this.ui.updateInventory(this.inventory);
+
+          // Mint the item via Web3Manager
+          const txHash = await this.web3.mintNFT('Epic NFT Kilic');
+          
+          btn.textContent = "NFT MINTLENDI!";
+          btn.style.background = "#4CAF50";
+          status.innerHTML = `<a href="https://testnet.snowtrace.io/tx/${txHash}" target="_blank" style="color:#aaddff;">Islemi Snowtrace'te Gor (Fuji)</a>`;
+          
+          // Add the epic sword to the local game inventory
+          this.inventory.addItem('sword_epic', 1);
+          this.ui.updateInventory(this.inventory);
+          this.ui.showInteraction("Epic KILIC NFT basariyla mintlendi!");
+          this.particles.emitCollect(this.player.position);
+          this.audio.playCraft();
+
+        } catch (error) {
+          // If transaction fails or rejected, return items
+          this.inventory.addItem('wood', 5);
+          this.inventory.addItem('stone', 5);
+          this.ui.updateInventory(this.inventory);
+          
+          document.getElementById('btn-mint-nft').disabled = false;
+          document.getElementById('btn-mint-nft').textContent = "NFT Mintle (5 Odun, 5 Tas)";
+          document.getElementById('mint-status').textContent = "Islem iptal edildi veya basarisiz oldu.";
+        }
+      } else {
+        this.ui.showInteraction("Yetersiz Kaynak! 5 Odun ve 5 Tas gerekli.");
+      }
     });
 
     document.getElementById('btn-respawn')?.addEventListener('click', () => {

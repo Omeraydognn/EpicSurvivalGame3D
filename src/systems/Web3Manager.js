@@ -84,4 +84,33 @@ export class Web3Manager {
         if (!address) return '';
         return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
     }
+
+    async mintNFT(itemName) {
+        if (!this.signer) {
+            throw new Error("Lütfen once Cuzdan baglayin!");
+        }
+
+        try {
+            // We simulate minting an NFT by sending a 0 AVAX transaction to themselves on Fuji Testnet.
+            // The data field contains the "Mint" message. This proves on-chain verifiable action without needing to deploy a contract manually right now.
+            const txData = ethers.hexlify(ethers.toUtf8Bytes(`MINT_NFT:${itemName}`));
+            
+            const tx = await this.signer.sendTransaction({
+                to: this.account, 
+                value: 0,
+                data: txData
+            });
+
+            console.log("Transaction Sent. Hash:", tx.hash);
+            
+            // Wait for confirmation
+            const receipt = await tx.wait();
+            console.log("Transaction Confirmed in block", receipt.blockNumber);
+            
+            return tx.hash;
+        } catch (error) {
+            console.error("Minting failed", error);
+            throw error;
+        }
+    }
 }

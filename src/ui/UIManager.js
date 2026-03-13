@@ -20,7 +20,8 @@ export class UIManager {
       'vehicle-fuel', 'skill-panel', 'xp-popup', 'armor-text',
       'oxygen-bar', 'oxygen-text', 'oxygen-bar-container',
       'village-indicator', 'village-distance',
-      'btn-connect-wallet', 'wallet-status'
+      'btn-connect-wallet', 'wallet-status',
+      'btn-mint-nft', 'mint-status'
     ];
     ids.forEach(id => {
       this.elements[id] = document.getElementById(id);

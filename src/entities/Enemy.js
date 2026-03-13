@@ -208,11 +208,21 @@ export class Enemy {
     // Attack cooldown
     this.attackCooldown -= deltaTime;
 
-    // Hit flash
+    // Hit flash / Damage impact
     if (this.hitFlash > 0) {
       this.hitFlash -= deltaTime;
-      this.bodyMesh.material.emissive.setHex(this.hitFlash > 0 ? 0xff0000 : 0x000000);
-      this.headMesh.material.emissive.setHex(this.hitFlash > 0 ? 0xff0000 : 0x000000);
+      const flashColor = this.hitFlash > 0 ? 0xcc0000 : 0x000000;
+      this.bodyMesh.material.emissive.setHex(flashColor);
+      this.headMesh.material.emissive.setHex(flashColor);
+      this.leftArm.material.emissive.setHex(flashColor);
+      this.rightArm.material.emissive.setHex(flashColor);
+      this.leftLeg.material.emissive.setHex(flashColor);
+      this.rightLeg.material.emissive.setHex(flashColor);
+
+      // Knockback / Stagger visual
+      this.mesh.rotation.z = Math.sin(this.hitFlash * 20) * 0.1;
+    } else {
+      this.mesh.rotation.z = 0;
     }
 
     // Health bar

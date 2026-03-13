@@ -23,6 +23,13 @@ export class Player {
     this.euler = new THREE.Euler(0, 0, 0, 'YXZ');
     this.mouseSensitivity = 0.002;
 
+    // Head Bobbing & Animations
+    this.headBobTimer = 0;
+    this.headBobBaseY = this.height;
+    this.walkBobAmount = 0.08;
+    this.sprintBobAmount = 0.15;
+    this.bobFrequency = 12;
+
     // Stats
     this.health = 100;
     this.maxHealth = 100;
@@ -256,32 +263,55 @@ export class Player {
     this.camera.position.copy(this.position);
 
     // Head bob when moving
+    const targetRoll = (this.direction.length() > 0 && this.isGrounded)
+      ? Math.sin(performance.now() / 1000 * (this.isSprinting ? 12 : 8)) * 0.015
+      : 0;
+    this.camera.rotation.z += (targetRoll - this.camera.rotation.z) * 0.1;
+
     if (this.direction.length() > 0 && this.isGrounded) {
       const bobSpeed = this.isSprinting ? 12 : 8;
-      const bobAmount = this.isSprinting ? 0.06 : 0.03;
+      const bobAmount = this.isSprinting ? 0.08 : 0.04;
       this.camera.position.y += Math.sin(performance.now() / 1000 * bobSpeed) * bobAmount;
     }
 
     // Attack cooldown
     if (this.attackCooldown > 0) this.attackCooldown -= deltaTime;
 
-    // Attack animation
+    // Advanced Attack animation (swinging down and inward)
     if (this.isAttacking) {
-      this.attackTimer += deltaTime * 8;
-      const swingAngle = Math.sin(this.attackTimer * Math.PI) * 0.8;
-      this.arm.rotation.x = -swingAngle;
-      this.arm.position.z = this.armDefaultPos.z - Math.sin(this.attackTimer * Math.PI) * 0.2;
+      this.attackTimer += deltaTime * 12; // Faster swing
+      const progress = this.attackTimer;
+      
+      // We want a quick strike and a slightly slower recovery
+      const swingParam = progress < 0.3 ? (progress / 0.3) : (1 - (progress - 0.3) / 0.7);
+      
+      this.arm.rotation.x = -swingParam * 1.2;
+      this.arm.rotation.y = swingParam * 0.5;
+      this.arm.rotation.z = swingParam * 0.3;
+      
+      this.arm.position.z = this.armDefaultPos.z - swingParam * 0.4;
+      this.arm.position.x = this.armDefaultPos.x - swingParam * 0.2;
 
       if (this.attackTimer >= 1) {
         this.isAttacking = false;
         this.attackTimer = 0;
-        this.arm.rotation.x = 0;
+        this.arm.rotation.set(0, 0, 0);
         this.arm.position.copy(this.armDefaultPos);
       }
     } else {
-      // Idle arm sway
+      // Idle breathing/bobbing for the arm
       const t = performance.now() / 1000;
-      this.arm.position.y = this.armDefaultPos.y + Math.sin(t * 2) * 0.01;
+      this.arm.rotation.x = Math.sin(t * 2) * 0.02;
+      
+      if (this.direction.length() > 0 && this.isGrounded) {
+        // Arm bobbing while walking
+        const armBobSpeed = this.isSprinting ? 12 : 8;
+        const armBobAmount = this.isSprinting ? 0.05 : 0.02;
+        this.arm.position.y = this.armDefaultPos.y + Math.sin(t * armBobSpeed) * armBobAmount;
+      } else {
+        // Return to default with idle sway
+        this.arm.position.y += (this.armDefaultPos.y + Math.sin(t * 2) * 0.01 - this.arm.position.y) * 0.1;
+      }
     }
 
     // Survival stats drain (modified by level)
