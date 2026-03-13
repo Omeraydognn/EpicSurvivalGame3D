@@ -12,6 +12,7 @@ import { BuildSystem } from './systems/BuildSystem.js';
 import { LevelSystem } from './systems/LevelSystem.js';
 import { WeatherSystem } from './systems/WeatherSystem.js';
 import { VehicleManager } from './systems/VehicleSystem.js';
+import { Web3Manager } from './systems/Web3Manager.js';
 import { AudioManager } from './audio/AudioManager.js';
 import { UIManager } from './ui/UIManager.js';
 import { distance2D } from './utils/math.js';
@@ -23,6 +24,7 @@ class Game {
     this.clock = new THREE.Clock();
     this.ui = new UIManager();
     this.audio = new AudioManager();
+    this.web3 = new Web3Manager();
     this.keys = {};
 
     this.initRenderer();
@@ -107,6 +109,17 @@ class Game {
       this.audio.init();
       this.audio.playButtonClick();
       this.startGame();
+    });
+
+    document.getElementById('btn-connect-wallet')?.addEventListener('click', async () => {
+      this.audio.init();
+      this.audio.playButtonClick();
+      try {
+        const address = await this.web3.connect();
+        this.ui.updateWalletStatus(this.web3.formatAddress(address));
+      } catch (e) {
+        console.error("Wallet connection failed", e);
+      }
     });
 
     document.getElementById('btn-controls')?.addEventListener('click', () => {

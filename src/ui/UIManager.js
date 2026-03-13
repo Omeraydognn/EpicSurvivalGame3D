@@ -20,6 +20,7 @@ export class UIManager {
       'vehicle-fuel', 'skill-panel', 'xp-popup', 'armor-text',
       'oxygen-bar', 'oxygen-text', 'oxygen-bar-container',
       'village-indicator', 'village-distance',
+      'btn-connect-wallet', 'wallet-status'
     ];
     ids.forEach(id => {
       this.elements[id] = document.getElementById(id);
@@ -34,6 +35,15 @@ export class UIManager {
   hide(id) {
     const el = this.elements[id] || document.getElementById(id);
     if (el) el.style.display = 'none';
+  }
+
+  updateWalletStatus(address) {
+    if (this.elements['wallet-status']) {
+      this.elements['wallet-status'].textContent = `Cuzdan Baglandi: ${address}`;
+    }
+    if (this.elements['btn-connect-wallet']) {
+      this.elements['btn-connect-wallet'].style.display = 'none';
+    }
   }
 
   showLoading() {
